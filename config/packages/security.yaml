@@ -1,0 +1,41 @@
+security:
+    password_hashers:
+        App\Entity\User:
+            algorithm: auto
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        login:
+            pattern: ^/api/login
+            stateless: true
+            json_login:
+                check_path: /api/login
+                username_path: email
+                password_path: password
+
+        main:
+            stateless: true
+            custom_authenticators:
+                - App\Security\JwtAuthenticator
+
+    access_control:
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/restaurateur, roles: [ROLE_RESTAURATEUR, ROLE_ADMIN] }
+        - { path: ^/api/client, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/restaurateur/dishes, roles: [ROLE_RESTAURATEUR, ROLE_ADMIN] }
+        - { path: ^/api/client/orders, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
+        - { path: ^/api/order, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
+        - { path: ^/api/user/profile, roles: [ROLE_USER, ROLE_ADMIN] }
+        - { path: ^/api/admin/users, roles: [ROLE_ADMIN] }
