@@ -1,3 +1,4 @@
+* text=auto
 
 ###> symfony/framework-bundle ###
 /.env.local
