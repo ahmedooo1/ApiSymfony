@@ -6,6 +6,7 @@
 parameters:
     env(JWT_SECRET): '%env(JWT_SECRET)%'
     jwt_secret: '%env(JWT_SECRET)%'
+    brevo_api_key: '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'
 
 services:
     # default configuration for services in *this* file

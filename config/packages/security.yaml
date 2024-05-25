@@ -22,12 +22,23 @@ security:
                 username_path: email
                 password_path: password
 
+        reset_password_request:
+            pattern: ^/api/request-reset-password
+            stateless: true
+            security: false
+
+        reset_password:
+            pattern: ^/api/reset-password
+            stateless: true
+            security: false
+
         main:
             stateless: true
             custom_authenticators:
                 - App\Security\JwtAuthenticator
 
     access_control:
+        - { path: ^/api/restaurateur/dishes, methods: [GET], roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
@@ -39,3 +50,6 @@ security:
         - { path: ^/api/order, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api/user/profile, roles: [ROLE_USER, ROLE_ADMIN] }
         - { path: ^/api/admin/users, roles: [ROLE_ADMIN] }
+        - { path: ^/api/reset-password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/request-reset-password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+

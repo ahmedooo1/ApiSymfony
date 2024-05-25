@@ -8,29 +8,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\IsGranted; // Corrected this line
 
 class DishController extends AbstractController
 {
-    #[Route('/api/restaurateur/dishes', name: 'create_dish', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-
-        $dish = new Dish();
-        $dish->setName($data['name']);
-        $dish->setDescription($data['description']);
-        $dish->setPrice($data['price']);
-        $dish->setType($data['type']);
-        $dish->setCreatedAt(new \DateTime());
-        $dish->setAvailableUntil(new \DateTime($data['available_until']));
-
-        $entityManager->persist($dish);
-        $entityManager->flush();
-
-        return new JsonResponse('Dish created', JsonResponse::HTTP_CREATED);
-    }
-
-    #[Route('/api/restaurateur/dishes', name: 'get_dishes', methods: ['GET'])]
+    #[Route('/api/restaurateur/dishes', name: 'dish_index', methods: ['GET'])]
     public function index(EntityManagerInterface $entityManager): JsonResponse
     {
         $dishes = $entityManager->getRepository(Dish::class)->findAll();
@@ -51,7 +33,51 @@ class DishController extends AbstractController
         return new JsonResponse($data);
     }
 
-    #[Route('/api/restaurateur/dishes/{id}', name: 'update_dish', methods: ['PUT'])]
+    #[Route('/api/restaurateur/dishes/{id}', name: 'dish_show', methods: ['GET'])]
+    public function show(int $id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $dish = $entityManager->getRepository(Dish::class)->find($id);
+        if (!$dish) {
+            return new JsonResponse(['message' => 'Dish not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = [
+            'id' => $dish->getId(),
+            'name' => $dish->getName(),
+            'description' => $dish->getDescription(),
+            'price' => $dish->getPrice(),
+            'type' => $dish->getType(),
+            'created_at' => $dish->getCreatedAt()->format('Y-m-d H:i:s'),
+            'available_until' => $dish->getAvailableUntil()->format('Y-m-d H:i:s'),
+        ];
+
+        return new JsonResponse($data);
+    }
+
+    #[Route('/api/restaurateur/dishes', name: 'dish_create', methods: ['POST'])]
+    #[IsGranted('ROLE_RESTAURATEUR')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $dish = new Dish();
+        $dish->setName($data['name']);
+        $dish->setDescription($data['description']);
+        $dish->setPrice($data['price']);
+        $dish->setType($data['type']);
+        $dish->setCreatedAt(new \DateTime());
+        $dish->setAvailableUntil(new \DateTime($data['available_until']));
+
+        $entityManager->persist($dish);
+        $entityManager->flush();
+
+        return new JsonResponse('Dish created', JsonResponse::HTTP_CREATED);
+    }
+
+    #[Route('/api/restaurateur/dishes/{id}', name: 'dish_update', methods: ['PUT'])]
+    #[IsGranted('ROLE_RESTAURATEUR')]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(Request $request, Dish $dish, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -81,7 +107,9 @@ class DishController extends AbstractController
         return new JsonResponse('Dish updated', JsonResponse::HTTP_OK);
     }
 
-    #[Route('/api/restaurateur/dishes/{id}', name: 'delete_dish', methods: ['DELETE'])]
+    #[Route('/api/restaurateur/dishes/{id}', name: 'dish_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_RESTAURATEUR')]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Dish $dish, EntityManagerInterface $entityManager): JsonResponse
     {
         $entityManager->remove($dish);

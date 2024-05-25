@@ -27,6 +27,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 180, unique: true)]
     private $username;
 
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    private $resetToken;
+
     // add your own fields
 
     public function __construct()
@@ -108,4 +111,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // Not needed when using modern algorithms (e.g. bcrypt or sodium)
         return null;
     }
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): self
+    {
+        $this->resetToken = $resetToken;
+
+        return $this;
+    }
 }
+
