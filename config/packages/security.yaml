@@ -38,11 +38,11 @@ security:
                 - App\Security\JwtAuthenticator
 
     access_control:
-        - { path: ^/api/restaurateur/dishes, methods: [GET], roles: PUBLIC_ACCESS }
+        - { path: ^/api/restaurateur/dishes, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
-        - { path: ^/api/restaurateur, roles: [ROLE_RESTAURATEUR, ROLE_ADMIN] }
+        - { path: ^/api/restaurateur, roles: [ROLE_ADMIN] }
         - { path: ^/api/client, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/restaurateur/dishes, roles: [ROLE_RESTAURATEUR, ROLE_ADMIN] }
@@ -52,4 +52,3 @@ security:
         - { path: ^/api/admin/users, roles: [ROLE_ADMIN] }
         - { path: ^/api/reset-password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/request-reset-password, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-

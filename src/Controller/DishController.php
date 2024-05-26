@@ -8,7 +8,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Security\Http\Attribute\IsGranted; // Corrected this line
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Core\Authorization\ExpressionLanguage;
 
 class DishController extends AbstractController
 {
@@ -55,11 +56,14 @@ class DishController extends AbstractController
     }
 
     #[Route('/api/restaurateur/dishes', name: 'dish_create', methods: ['POST'])]
-    #[IsGranted('ROLE_RESTAURATEUR')]
     #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['name'], $data['description'], $data['price'], $data['type'], $data['available_until'])) {
+            return new JsonResponse(['message' => 'Missing required fields'], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         $dish = new Dish();
         $dish->setName($data['name']);
@@ -76,8 +80,7 @@ class DishController extends AbstractController
     }
 
     #[Route('/api/restaurateur/dishes/{id}', name: 'dish_update', methods: ['PUT'])]
-    #[IsGranted('ROLE_RESTAURATEUR')]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(['ROLE_ADMIN'])]
     public function update(Request $request, Dish $dish, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -108,10 +111,13 @@ class DishController extends AbstractController
     }
 
     #[Route('/api/restaurateur/dishes/{id}', name: 'dish_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_RESTAURATEUR')]
     #[IsGranted('ROLE_ADMIN')]
     public function delete(Dish $dish, EntityManagerInterface $entityManager): JsonResponse
     {
+        if (!$dish) {
+            return new JsonResponse(['message' => 'Dish not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
         $entityManager->remove($dish);
         $entityManager->flush();
 

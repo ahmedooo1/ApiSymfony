@@ -11,10 +11,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Http\Attribute\IsGranted; // Added this line
 
 class OrderController extends AbstractController
 {
-    #[Route('/api/client/orders', name: 'create_order', methods: ['POST'])]
+    #[Route('/api/orders', name: 'create_order', methods: ['POST'])]
     public function create(Request $request, DishRepository $dishRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -45,7 +46,7 @@ class OrderController extends AbstractController
         return new JsonResponse('Order created', JsonResponse::HTTP_CREATED);
     }
 
-    #[Route('/api/client/orders', name: 'get_orders', methods: ['GET'])]
+    #[Route('/api/orders', name: 'get_orders', methods: ['GET'])]
     public function getOrders(EntityManagerInterface $entityManager): JsonResponse
     {
         $orders = $entityManager->getRepository(Order::class)->findBy(['client' => $this->getUser()]);
@@ -69,5 +70,19 @@ class OrderController extends AbstractController
         }
 
         return new JsonResponse($data);
+    }
+
+    #[Route('/api/orders/{id}', name: 'order_delete', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function delete(Order $order = null, EntityManagerInterface $entityManager): JsonResponse
+    {
+        if (!$order) {
+            return new JsonResponse(['message' => 'Order not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $entityManager->remove($order);
+        $entityManager->flush();
+
+        return new JsonResponse('Order deleted', JsonResponse::HTTP_OK);
     }
 }
