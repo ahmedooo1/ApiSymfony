@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: "App\Repository\OrderItemRepository")]
 class OrderItem
 {
     #[ORM\Id]
@@ -14,8 +14,8 @@ class OrderItem
 
     #[ORM\ManyToOne(targetEntity: Order::class, inversedBy: 'items')]
     private $order;
-
-    #[ORM\ManyToOne(targetEntity: Dish::class)]
+    #[ORM\ManyToOne(targetEntity: Dish::class, inversedBy: 'orderItems')]
+    #[ORM\JoinColumn(nullable: false)]
     private $dish;
 
     #[ORM\Column(type: 'integer')]

@@ -7,6 +7,9 @@ parameters:
     env(JWT_SECRET): '%env(JWT_SECRET)%'
     jwt_secret: '%env(JWT_SECRET)%'
     brevo_api_key: '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'
+    cloudinary_cloud_name: 'dlcm2l9yn'
+    cloudinary_api_key: '335778326261411'
+    cloudinary_api_secret: 'KFtMVLlHInYPQiDrh7Gjo80MjMg'
 
 services:
     # default configuration for services in *this* file
