@@ -131,8 +131,6 @@ class DishController extends AbstractController
         }
 
         $data = $request->request->all();
-        $this->logger->info('Received data for update', $data);
-        $imageFile = $request->files->get('image');
 
         if (isset($data['name'])) {
             $dish->setName($data['name']);
@@ -154,31 +152,8 @@ class DishController extends AbstractController
             $dish->setAvailableUntil(new \DateTime($data['available_until']));
         }
 
-        if ($imageFile) {
-            try {
-                // Set SSL options for the cURL handler
-                $curlOptions = [
-                    CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => 0,
-                ];
-
-                $uploadResult = $this->cloudinary->uploadApi()->upload($imageFile->getPathname(), [
-                    'curl' => $curlOptions,
-                ]);
-
-                if (isset($uploadResult['secure_url'])) {
-                    $dish->setImage($uploadResult['secure_url']);
-                } else {
-                    return new JsonResponse(['error' => 'Failed to upload image'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-                }
-            } catch (\Exception $e) {
-                return new JsonResponse(['error' => 'Error uploading image: ' . $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-            }
-        }
-
         $entityManager->persist($dish);
         $entityManager->flush();
-        $this->logger->info('Dish updated successfully', ['id' => $id, 'data' => $data]);
 
         return new JsonResponse('Dish updated', JsonResponse::HTTP_OK);
     }
@@ -196,5 +171,58 @@ class DishController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse('Dish deleted', JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/api/restaurateur/dishes/{id}/image', name: 'dish_delete_image', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function deleteImage(int $id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $dish = $entityManager->getRepository(Dish::class)->find($id);
+        if (!$dish) {
+            return new JsonResponse(['message' => 'Dish not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $dish->setImage(null);
+        $entityManager->persist($dish);
+        $entityManager->flush();
+
+        return new JsonResponse('Image deleted', JsonResponse::HTTP_OK);
+    }
+
+    #[Route('/api/restaurateur/dishes/{id}/image', name: 'dish_add_image', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function addImage(Request $request, int $id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $dish = $entityManager->getRepository(Dish::class)->find($id);
+        if (!$dish) {
+            return new JsonResponse(['message' => 'Dish not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $imageFile = $request->files->get('image');
+        if (!$imageFile) {
+            return new JsonResponse(['error' => 'Image is required'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $uploadResult = $this->cloudinary->uploadApi()->upload($imageFile->getPathname(), [
+                'curl' => [
+                    CURLOPT_SSL_VERIFYHOST => 0,
+                    CURLOPT_SSL_VERIFYPEER => 0,
+                ],
+            ]);
+
+            if (isset($uploadResult['secure_url'])) {
+                $dish->setImage($uploadResult['secure_url']);
+            } else {
+                return new JsonResponse(['error' => 'Failed to upload image'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Error uploading image: ' . $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $entityManager->persist($dish);
+        $entityManager->flush();
+
+        return new JsonResponse('Image added', JsonResponse::HTTP_OK);
     }
 }
