@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Security\Http\Attribute\IsGranted; // Added this line
 
 class OrderController extends AbstractController
 {
@@ -21,8 +20,14 @@ class OrderController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         $order = new Order();
-        $order->setClient($this->getUser());
+        $order->setClientName($data['client_name']);
+        $order->setClientEmail($data['client_email']);
+        $order->setAddress($data['address'] ?? '');
+        $order->setCity($data['city'] ?? '');
+        $order->setPostalCode($data['postal_code'] ?? '');
+        $order->setPaymentMethod($data['payment_method'] ?? '');
         $order->setOrderedAt(new \DateTime());
+        $order->setIsPaid(false);
 
         $entityManager->persist($order);
         $entityManager->flush();
@@ -73,7 +78,6 @@ class OrderController extends AbstractController
     }
 
     #[Route('/api/orders/{id}', name: 'order_delete', methods: ['DELETE'])]
-    #[IsGranted('ROLE_ADMIN')]
     public function delete(Order $order = null, EntityManagerInterface $entityManager): JsonResponse
     {
         if (!$order) {

@@ -39,14 +39,15 @@ security:
 
     access_control:
         - { path: ^/api/restaurateur/dishes, roles: PUBLIC_ACCESS }
+        - { path: ^/api/categories, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/orders, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
         - { path: ^/api/restaurateur, roles: [ROLE_ADMIN] }
         - { path: ^/api/client, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/restaurateur/dishes, roles: [ROLE_RESTAURATEUR, ROLE_ADMIN] }
-        - { path: ^/api/client/orders, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api/order, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api/user/profile, roles: [ROLE_USER, ROLE_ADMIN] }
         - { path: ^/api/admin/users, roles: [ROLE_ADMIN] }

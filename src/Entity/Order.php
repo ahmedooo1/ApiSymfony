@@ -13,6 +13,27 @@ class Order
     #[ORM\Column(type: 'integer')]
     private $id;
 
+    #[ORM\Column(type: 'string', length: 255)]
+    private $clientName;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private $clientEmail;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $address;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private $paymentMethod;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private $city;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    private $postalCode;
+
+    #[ORM\Column(type: 'boolean')]
+    private $isPaid = false;
+
     #[ORM\ManyToOne(targetEntity: User::class)]
     private $client;
 
@@ -69,5 +90,82 @@ class Order
         $this->items->removeElement($item);
 
         return $this;
+    }
+
+    public function setClientName(string $clientName): self
+    {
+        $this->clientName = $clientName;
+        return $this;
+    }
+
+    public function setClientEmail(string $clientEmail): self
+    {
+        $this->clientEmail = $clientEmail;
+        return $this;
+    }
+
+    public function getClientName(): ?string
+    {
+        return $this->clientName;
+    }
+
+    public function getClientEmail(): ?string
+    {
+        return $this->clientEmail;
+    }
+
+    public function setAddress(string $address): self
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setPaymentMethod(string $paymentMethod): self
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    public function getPaymentMethod(): ?string
+    {
+        return $this->paymentMethod;
+    }
+
+    public function setCity(string $city): self
+    {
+        $this->city = $city;
+        return $this;
+    }
+
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setPostalCode(string $postalCode): self
+    {
+        $this->postalCode = $postalCode;
+        return $this;
+    }
+
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode;
+    }
+
+    public function setIsPaid(bool $isPaid): self
+    {
+        $this->isPaid = $isPaid;
+        return $this;
+    }
+
+    public function getIsPaid(): ?bool
+    {
+        return $this->isPaid;
     }
 }

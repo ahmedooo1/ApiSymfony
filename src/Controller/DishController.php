@@ -11,12 +11,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Cloudinary\Cloudinary;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Psr\Log\LoggerInterface;
 
 class DishController extends AbstractController
 {
     private $cloudinary;
+    private $logger;
 
-    public function __construct(ParameterBagInterface $params)
+    public function __construct(ParameterBagInterface $params, LoggerInterface $logger)
     {
         $this->cloudinary = new Cloudinary([
             'cloud' => [
@@ -25,6 +27,7 @@ class DishController extends AbstractController
                 'api_secret' => $params->get('cloudinary_api_secret'),
             ],
         ]);
+        $this->logger = $logger;
     }
 
     #[Route('/api/restaurateur/dishes', name: 'dish_index', methods: ['GET'])]
@@ -120,9 +123,15 @@ class DishController extends AbstractController
 
     #[Route('/api/restaurateur/dishes/{id}', name: 'dish_update', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
-    public function update(Request $request, Dish $dish, EntityManagerInterface $entityManager): JsonResponse
+    public function update(Request $request, int $id, EntityManagerInterface $entityManager): JsonResponse
     {
+        $dish = $entityManager->getRepository(Dish::class)->find($id);
+        if (!$dish) {
+            return new JsonResponse(['message' => 'Dish not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
         $data = $request->request->all();
+        $this->logger->info('Received data for update', $data);
         $imageFile = $request->files->get('image');
 
         if (isset($data['name'])) {
@@ -167,7 +176,9 @@ class DishController extends AbstractController
             }
         }
 
+        $entityManager->persist($dish);
         $entityManager->flush();
+        $this->logger->info('Dish updated successfully', ['id' => $id, 'data' => $data]);
 
         return new JsonResponse('Dish updated', JsonResponse::HTTP_OK);
     }
