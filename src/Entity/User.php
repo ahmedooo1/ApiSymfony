@@ -30,6 +30,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 64, nullable: true)]
     private $resetToken;
 
+    #[ORM\Column(type: 'boolean')]
+    private $isOAuthUser = false;
+
     // add your own fields
 
     public function __construct()
@@ -123,6 +126,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    public function getIsOAuthUser(): bool
+    {
+        return $this->isOAuthUser;
+    }
+
+    public function setIsOAuthUser(bool $isOAuthUser): self
+    {
+        $this->isOAuthUser = $isOAuthUser;
+
+        return $this;
+    }
 }
-
-

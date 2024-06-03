@@ -38,6 +38,8 @@ security:
                 - App\Security\JwtAuthenticator
 
     access_control:
+        - { path: ^/api/google-auth, roles: PUBLIC_ACCESS }
+        - { path: ^/api/google-callback, roles: PUBLIC_ACCESS }
         - { path: ^/api/restaurateur/dishes, roles: PUBLIC_ACCESS }
         - { path: ^/api/categories, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }

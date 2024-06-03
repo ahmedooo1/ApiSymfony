@@ -10,6 +10,9 @@ parameters:
     cloudinary_cloud_name: 'dlcm2l9yn'
     cloudinary_api_key: '335778326261411'
     cloudinary_api_secret: 'KFtMVLlHInYPQiDrh7Gjo80MjMg'
+    google_client_id: '%env(GOOGLE_CLIENT_ID)%'
+    google_client_secret: '%env(GOOGLE_CLIENT_SECRET)%'
+    google_redirect_uri: '%env(GOOGLE_REDIRECT_URI)%'
 
 services:
     # default configuration for services in *this* file
@@ -57,3 +60,8 @@ services:
             $entityManager: '@doctrine.orm.entity_manager'
         tags: ['console.command']
 
+    App\Service\GoogleAuthService:
+        arguments:
+            $clientId: '%google_client_id%'
+            $clientSecret: '%google_client_secret%'
+            $redirectUri: '%google_redirect_uri%'

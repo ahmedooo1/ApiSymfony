@@ -13,6 +13,7 @@
         "doctrine/orm": "^3.1",
         "firebase/php-jwt": "^6.10",
         "getbrevo/brevo-php": "^2.0",
+        "league/oauth2-google": "^4.0",
         "nelmio/cors-bundle": "^2.4",
         "sendinblue/api-v3-sdk": "^8.4",
         "symfony/console": "7.0.*",
