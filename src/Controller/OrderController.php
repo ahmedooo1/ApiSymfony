@@ -19,6 +19,10 @@ class OrderController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
+        if (!isset($data['total_amount'])) {
+            return new JsonResponse(['message' => 'Total amount is required'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
         $order = new Order();
         $order->setClientName($data['client_name']);
         $order->setClientEmail($data['client_email']);
@@ -27,6 +31,7 @@ class OrderController extends AbstractController
         $order->setPostalCode($data['postal_code'] ?? '');
         $order->setPaymentMethod($data['payment_method'] ?? '');
         $order->setOrderedAt(new \DateTime());
+        $order->setTotalAmount($data['total_amount']);
         $order->setIsPaid(false);
 
         $entityManager->persist($order);

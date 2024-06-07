@@ -45,7 +45,9 @@ security:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/orders, roles: PUBLIC_ACCESS }
+        - { path: ^/api/payments/stripe, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/categories, roles: ROLE_ADMIN }
         - { path: ^/api/restaurateur, roles: [ROLE_ADMIN] }
         - { path: ^/api/client, roles: [ROLE_CLIENT, ROLE_ADMIN, ROLE_RESTAURATEUR] }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

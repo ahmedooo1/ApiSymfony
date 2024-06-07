@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Dish;
+use App\Entity\Category;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,6 +45,11 @@ class DishController extends AbstractController
                 'created_at' => $dish->getCreatedAt()->format('Y-m-d H:i:s'),
                 'available_until' => $dish->getAvailableUntil()->format('Y-m-d H:i:s'),
                 'image' => $dish->getImage(),
+                'image' => $dish->getImage(),
+                'category' => $dish->getCategory() ? [
+                    'id' => $dish->getCategory()->getId(),
+                    'name' => $dish->getCategory()->getName()
+                ] : null
             ];
         }, $dishes);
 
@@ -67,6 +73,11 @@ class DishController extends AbstractController
             'created_at' => $dish->getCreatedAt()->format('Y-m-d H:i:s'),
             'available_until' => $dish->getAvailableUntil()->format('Y-m-d H:i:s'),
             'image' => $dish->getImage(),
+            'image' => $dish->getImage(),
+            'category' => $dish->getCategory() ? [
+                'id' => $dish->getCategory()->getId(),
+                'name' => $dish->getCategory()->getName()
+            ] : null
         ];
 
         return new JsonResponse($data);
@@ -84,6 +95,11 @@ class DishController extends AbstractController
                 return new JsonResponse(['error' => 'Image is required'], JsonResponse::HTTP_BAD_REQUEST);
             }
 
+            $category = $entityManager->getRepository(Category::class)->find($data['category_id']);
+            if (!$category) {
+                return new JsonResponse(['error' => 'Category not found'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+
             $dish = new Dish();
             $dish->setName($data['name']);
             $dish->setDescription($data['description']);
@@ -91,16 +107,15 @@ class DishController extends AbstractController
             $dish->setType($data['type']);
             $dish->setCreatedAt(new \DateTime());
             $dish->setAvailableUntil(new \DateTime($data['available_until']));
+            $dish->setCategory($category);
+            
 
             try {
-                // Set SSL options for the cURL handler
-                $curlOptions = [
-                    CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => 0,
-                ];
-
                 $uploadResult = $this->cloudinary->uploadApi()->upload($imageFile->getPathname(), [
-                    'curl' => $curlOptions,
+                    'curl' => [
+                        CURLOPT_SSL_VERIFYHOST => 0,
+                        CURLOPT_SSL_VERIFYPEER => 0,
+                    ],
                 ]);
 
                 if (isset($uploadResult['secure_url'])) {
@@ -131,6 +146,14 @@ class DishController extends AbstractController
         }
 
         $data = $request->request->all();
+
+        if (isset($data['category_id'])) {
+            $category = $entityManager->getRepository(Category::class)->find($data['category_id']);
+            if (!$category) {
+                return new JsonResponse(['error' => 'Category not found'], JsonResponse::HTTP_BAD_REQUEST);
+            }
+            $dish->setCategory($category);
+        }
 
         if (isset($data['name'])) {
             $dish->setName($data['name']);

@@ -13,6 +13,7 @@ parameters:
     google_client_id: '%env(GOOGLE_CLIENT_ID)%'
     google_client_secret: '%env(GOOGLE_CLIENT_SECRET)%'
     google_redirect_uri: '%env(GOOGLE_REDIRECT_URI)%'
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
 
 services:
     # default configuration for services in *this* file

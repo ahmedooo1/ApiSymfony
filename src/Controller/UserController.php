@@ -53,7 +53,7 @@ class UserController extends AbstractController
 
         $payload = [
             'username' => $user->getEmail(),
-            'exp' => (new \DateTime('+1 hour'))->getTimestamp(),
+            'exp' => (new \DateTime('+12 hour'))->getTimestamp(),
         ];
 
         $jwt = JWT::encode($payload, $this->jwtSecret, 'HS256');

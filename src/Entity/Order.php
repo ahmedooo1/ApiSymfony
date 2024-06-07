@@ -43,6 +43,9 @@ class Order
     #[ORM\OneToMany(targetEntity: OrderItem::class, mappedBy: 'order', cascade: ['persist', 'remove'])]
     private $items;
 
+    #[ORM\Column(type: 'integer')]
+    private $totalAmount;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -167,5 +170,17 @@ class Order
     public function getIsPaid(): ?bool
     {
         return $this->isPaid;
+    }
+
+    public function getTotalAmount(): int
+    {
+        return $this->totalAmount;
+    }
+
+    public function setTotalAmount(int $totalAmount): self
+    {
+        $this->totalAmount = $totalAmount;
+
+        return $this;
     }
 }
