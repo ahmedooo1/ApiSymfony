@@ -9,6 +9,13 @@ framework:
     #esi: true
     #fragments: true
 
+    form:
+        enabled: true
+    http_method_override: true
+    request:
+        formats:
+            json: ['application/json']
+
 when@test:
     framework:
         test: true

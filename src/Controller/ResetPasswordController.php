@@ -7,14 +7,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use App\Entity\User;
 use App\Repository\UserRepository;
 use Brevo\Client\Api\TransactionalEmailsApi;
 use Brevo\Client\Configuration;
 use GuzzleHttp\Client;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Brevo\Client\Model\SendSmtpEmail;
 
 class ResetPasswordController extends AbstractController
 {
@@ -28,10 +27,19 @@ class ResetPasswordController extends AbstractController
     #[Route('/api/request-reset-password', name: 'api_request_reset_password', methods: ['POST'])]
     public function requestResetPassword(Request $request, UserRepository $userRepository, EntityManagerInterface $entityManager): Response
     {
-        $email = $request->request->get('email');
+        $content = json_decode($request->getContent(), true);
+        $email = $content['email'] ?? null;
+        $this->logger->info('Searching for user with email: ' . $email);
+
+        if (!$email) {
+            $this->logger->error('No email provided');
+            return $this->json(['message' => 'No email provided'], Response::HTTP_BAD_REQUEST);
+        }
+
         $user = $userRepository->findOneBy(['email' => $email]);
 
         if (!$user) {
+            $this->logger->error('User not found for email: ' . $email);
             return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
@@ -47,14 +55,14 @@ class ResetPasswordController extends AbstractController
         $apiInstance = new TransactionalEmailsApi($client, $config);
 
         // Create the email
-        $sendSmtpEmail = new \Brevo\Client\Model\SendSmtpEmail([
+        $sendSmtpEmail = new SendSmtpEmail([
             'subject' => 'Password Reset Request',
             'sender' => ['name' => 'THE-CHEF 76', 'email' => 'projetfinal78@gmail.com'],
             'to' => [['email' => $user->getEmail()]],
             'htmlContent' => '
                 <div style="font-family: Arial, sans-serif; color: #333;">
                     <h2 style="color: #4CAF50;">Demande de réinitialisation de mot de passe</h2>
-                    <p>Bonjour ' . $user->getUsername() . ',</p>
+                    <p>Bonjour ' . $user->getName() . ',</p>
                     <p>Nous avons reçu une demande de réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
                     <p style="text-align: center;">
                         <a href="http://localhost:3000/reset-password/' . $resetToken . '" 
@@ -94,7 +102,9 @@ class ResetPasswordController extends AbstractController
             return $this->json(['message' => 'Invalid reset token'], Response::HTTP_BAD_REQUEST);
         }
 
-        $newPassword = $request->request->get('password');
+        $content = json_decode($request->getContent(), true);
+        $newPassword = $content['password'] ?? null;
+
         if (!$newPassword) {
             $this->logger->error('No password provided');
             return $this->json(['message' => 'No password provided'], Response::HTTP_BAD_REQUEST);
@@ -109,5 +119,5 @@ class ResetPasswordController extends AbstractController
 
         return $this->json(['message' => 'Password reset successfully']);
     }
-}
 
+}

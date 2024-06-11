@@ -2,140 +2,162 @@
 
 namespace App\Entity;
 
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity('email',message: 'Votre compte existe déjà')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private $id;
+    #[ORM\Column]
+    #[Groups(['user_no_pass'])]
+    private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 180, unique: true)]
-    private $email;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $name = null;
 
-    #[ORM\Column(type: 'json')]
-    private $roles = [];
 
-    #[ORM\Column(type: 'string')]
-    private $password;
+    #[ORM\Column(length: 180)]
+    #[Assert\NotBlank(message: "Votre E-mail est obligatoire")]
+    #[Assert\Email(
+        message: 'The email {{ value }} is not a valid email.',
+    )]
+    #[Groups(['user_no_pass'])]
+    private ?string $email = null;
 
-    #[ORM\Column(type: 'string', length: 180, unique: true)]
-    private $username;
+    /**
+     * @var list<string> The user roles
+     */
+    #[ORM\Column]
+    #[Groups(['user_no_pass'])]
+    private array $roles = [];
 
-    #[ORM\Column(type: 'string', length: 64, nullable: true)]
-    private $resetToken;
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    private ?string $password = null;
 
-    #[ORM\Column(type: 'boolean')]
-    private $isOAuthUser = false;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetToken = null;
 
-    // add your own fields
-
-    public function __construct()
-    {
-        $this->roles = ['ROLE_USER'];
-    }
-
+  
     public function getId(): ?int
     {
         return $this->id;
     }
+
+    
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
 
     public function getEmail(): ?string
     {
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(string $email): static
     {
         $this->email = $email;
 
         return $this;
     }
 
-    public function getUsername(): ?string
-    {
-        return $this->username;
-    }
-
-    public function setUsername(string $username): self
-    {
-        $this->username = $username;
-        return $this;
-    }
-
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
     public function getUserIdentifier(): string
     {
-        return (string) $this->username;
+        return (string) $this->email;
     }
 
+    /**
+     * @see UserInterface
+     *
+     * @return list<string>
+     */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        if (empty($roles)) {
-            $roles[] = 'ROLE_USER';
-        }
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): self
+    /**
+     * @param list<string> $roles
+     */
+    public function setRoles(array $roles): static
     {
-        if (!in_array('ROLE_USER', $roles)) {
-            $roles[] = 'ROLE_USER';
-        }
         $this->roles = $roles;
+
         return $this;
     }
 
-    public function getPassword(): ?string
+    public function addRole(string $role): self
+    {
+        if (!in_array($role, $this->roles, true)) {
+            $this->roles[] = $role;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    public function setPassword(string $password): static
     {
         $this->password = $password;
 
         return $this;
     }
 
-    public function eraseCredentials(): void
-    {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
-    }
-
-    public function getSalt(): ?string
-    {
-        // Not needed when using modern algorithms (e.g. bcrypt or sodium)
-        return null;
-    }
-
+   
     public function getResetToken(): ?string
     {
         return $this->resetToken;
     }
 
-    public function setResetToken(?string $resetToken): self
+    public function setResetToken(?string $resetToken): static
     {
         $this->resetToken = $resetToken;
 
         return $this;
     }
 
-    public function getIsOAuthUser(): bool
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials(): void
     {
-        return $this->isOAuthUser;
-    }
-
-    public function setIsOAuthUser(bool $isOAuthUser): self
-    {
-        $this->isOAuthUser = $isOAuthUser;
-
-        return $this;
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
     }
 }
