@@ -21,9 +21,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user_no_pass'])]
     private ?int $id = null;
 
+    #[ORM\Column(type: 'blob', nullable: true)]
+    #[Groups(['user_no_pass'])]
+    private $picture = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
-
 
     #[ORM\Column(length: 180)]
     #[Assert\NotBlank(message: "Votre E-mail est obligatoire")]
@@ -33,85 +36,69 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user_no_pass'])]
     private ?string $email = null;
 
-    /**
-     * @var list<string> The user roles
-     */
     #[ORM\Column]
     #[Groups(['user_no_pass'])]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column]
     private ?string $password = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resetToken = null;
 
-  
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    
+    public function getPicture(): ?string
+    {
+        return $this->picture ? base64_encode(stream_get_contents($this->picture)) : null;
+    }
+
+    public function setPicture(?string $picture): self
+    {
+        $this->picture = $picture ? base64_decode($picture) : null;
+        return $this;
+    }
+
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    public function setName(?string $name): static
+    public function setName(?string $name): self
     {
         $this->name = $name;
-
         return $this;
     }
-
 
     public function getEmail(): ?string
     {
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(string $email): self
     {
         $this->email = $email;
-
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    /**
-     * @see UserInterface
-     *
-     * @return list<string>
-     */
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
-
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
+    public function setRoles(array $roles): self
     {
         $this->roles = $roles;
-
         return $this;
     }
 
@@ -120,44 +107,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if (!in_array($role, $this->roles, true)) {
             $this->roles[] = $role;
         }
-
         return $this;
     }
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
     public function getPassword(): string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
-
         return $this;
     }
 
-   
     public function getResetToken(): ?string
     {
         return $this->resetToken;
     }
 
-    public function setResetToken(?string $resetToken): static
+    public function setResetToken(?string $resetToken): self
     {
         $this->resetToken = $resetToken;
-
         return $this;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
     }
 }

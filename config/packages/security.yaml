@@ -40,12 +40,18 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/user/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/menu, roles: PUBLIC_ACCESS}
+        - { path: ^/api/cart, roles: PUBLIC_ACCESS}
+        - { path: ^/api/orders, roles: PUBLIC_ACCESS}
+        - { path: ^/api/user/edit, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/user/getcurrent, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api/request-reset-password, roles: PUBLIC_ACCESS}
         - { path: ^/api/category, roles: [ROLE_ADMIN] }
+        - { path: ^/api/comment, roles: [ROLE_USER] }
         - { path: ^/api/menu, roles: ROLE_ADMIN, methods: [POST, PUT, DELETE] }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api,       roles: PUBLIC_ACCESS }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }
 

@@ -16,6 +16,7 @@
         "getbrevo/brevo-php": "^2.0",
         "jasongrimes/paginator": "~1.0",
         "lexik/jwt-authentication-bundle": "^3.0",
+        "nelmio/cors-bundle": "^2.4",
         "stripe/stripe-php": "^14.9",
         "symfony/console": "7.0.*",
         "symfony/dotenv": "7.0.*",

@@ -1,10 +1,11 @@
 <?php
 
+// src/Controller/ApiMenuItemController.php
+
 namespace App\Controller;
 
 use App\Entity\MenuItem;
 use App\Repository\MenuItemRepository;
-use Cloudinary\Cloudinary;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,18 +14,18 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ApiMenuItemController extends AbstractController
 {
-    private $cloudinary;
     private $logger;
+    private $filesystem;
 
-    public function __construct(Cloudinary $cloudinary, LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, Filesystem $filesystem)
     {
-        $this->cloudinary = $cloudinary;
         $this->logger = $logger;
+        $this->filesystem = $filesystem;
     }
 
     #[Route('/api/menu', name: 'api_menu_get', methods: ['GET'])]
@@ -34,33 +35,42 @@ class ApiMenuItemController extends AbstractController
         $json = $serializer->serialize($items, 'json', ['groups' => 'menu_item']);
         return new JsonResponse($json, Response::HTTP_OK, [], true);
     }
-    
 
     #[Route('/api/menu', name: 'api_menu_add', methods: ['POST'])]
     public function add(Request $request, ValidatorInterface $validator, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {
+        $data = json_decode($request->getContent(), true);
+    
+        // Vérifiez que les champs requis sont présents
+        if (!isset($data['name']) || !isset($data['description']) || !isset($data['price'])) {
+            return new JsonResponse(['message' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
+        }
+    
         $menuItem = new MenuItem();
-        $menuItem->setName($request->request->get('name'));
-        $menuItem->setDescription($request->request->get('description'));
-        $menuItem->setPrice($request->request->get('price'));
-
+        $menuItem->setName($data['name']);
+        $menuItem->setDescription($data['description']);
+        $menuItem->setPrice($data['price']);
+    
+        // Ajoutez une vérification pour l'image
+if (isset($data['image_url'])) {
+    $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image_url']));
+    $imageName = uniqid() . '.jpg';
+    file_put_contents($this->getParameter('images_directory') . '/' . $imageName, $decodedImage);
+    $menuItem->setImageUrl('/uploads/images/' . $imageName);
+}
+    
         $errors = $validator->validate($menuItem);
         if ($errors->count() > 0) {
             return $this->json(['errors' => $errors], Response::HTTP_BAD_REQUEST);
         }
-
-        $image = $request->files->get('imageUrl');
-        if ($image) {
-            $uploadResult = $this->cloudinary->uploadApi()->upload($image->getPathname());
-            $menuItem->setImageUrl($uploadResult['secure_url']);
-        }
-
+    
         $em->persist($menuItem);
         $em->flush();
-
+    
         return new JsonResponse($serializer->serialize($menuItem, 'json', ['groups' => 'menu_item']), Response::HTTP_CREATED, [], true);
     }
-
+    
+    
     #[Route('/api/menu/{id}', name: 'api_menu_update', methods: ['PUT'])]
     public function update(int $id, Request $request, MenuItemRepository $menuItemRepository, ValidatorInterface $validator, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {
@@ -69,78 +79,32 @@ class ApiMenuItemController extends AbstractController
         if (!$menuItem) {
             return new JsonResponse(['message' => 'Menu item not found'], Response::HTTP_NOT_FOUND);
         }
-    
-        $contentType = $request->headers->get('Content-Type');
-        $this->logger->info("Content-Type: $contentType");
-    
-        if (strpos($contentType, 'multipart/form-data') !== false) {
-            $data = $request->request->all();
-            $this->logger->info("Form Data: " . json_encode($data));
-    
-            if (isset($data['name'])) {
-                $menuItem->setName($data['name']);
-                $this->logger->info("Set name to: " . $data['name']);
-            }
-            if (isset($data['description'])) {
-                $menuItem->setDescription($data['description']);
-                $this->logger->info("Set description to: " . $data['description']);
-            }
-            if (isset($data['price'])) {
-                $menuItem->setPrice($data['price']);
-                $this->logger->info("Set price to: " . $data['price']);
-            }
-    
-            $image = $request->files->get('imageUrl');
-            if ($image) {
-                $this->logger->info("Uploading image to Cloudinary");
-                $uploadResult = $this->cloudinary->uploadApi()->upload($image->getPathname());
-                $menuItem->setImageUrl($uploadResult['secure_url']);
-                $this->logger->info("Set imageUrl to: " . $uploadResult['secure_url']);
-            } else {
-                $this->logger->info("No image uploaded");
-            }
-        } else {
-            // Handle JSON request body
-            $data = json_decode($request->getContent(), true);
-            $this->logger->info("JSON Data: " . json_encode($data));
-    
-            if (isset($data['name'])) {
-                $menuItem->setName($data['name']);
-                $this->logger->info("Set name to: " . $data['name']);
-            }
-            if (isset($data['description'])) {
-                $menuItem->setDescription($data['description']);
-                $this->logger->info("Set description to: " . $data['description']);
-            }
-            if (isset($data['price'])) {
-                $menuItem->setPrice($data['price']);
-                $this->logger->info("Set price to: " . $data['price']);
-            }
-            if (isset($data['imageUrl'])) {
-                $menuItem->setImageUrl($data['imageUrl']);
-                $this->logger->info("Set imageUrl to: " . $data['imageUrl']);
-            }
+
+        $data = json_decode($request->getContent(), true);
+        if (isset($data['name'])) {
+            $menuItem->setName($data['name']);
         }
-    
-        // Additional logging to check if the values are set correctly
-        $this->logger->info("Updated MenuItem: " . json_encode([
-            'id' => $menuItem->getId(),
-            'name' => $menuItem->getName(),
-            'description' => $menuItem->getDescription(),
-            'price' => $menuItem->getPrice(),
-            'imageUrl' => $menuItem->getImageUrl(),
-        ]));
-    
+        if (isset($data['description'])) {
+            $menuItem->setDescription($data['description']);
+        }
+        if (isset($data['price'])) {
+            $menuItem->setPrice($data['price']);
+        }
+        if (isset($data['image_url'])) {
+            $decodedImage = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $data['image_url']));
+            $imageName = uniqid() . '.jpg';
+            file_put_contents($this->getParameter('images_directory') . '/' . $imageName, $decodedImage);
+            $menuItem->setImageUrl('/uploads/images/' . $imageName);
+        }
+
         $errors = $validator->validate($menuItem);
         if ($errors->count() > 0) {
-            $this->logger->error("Validation Errors: " . json_encode($errors));
             return $this->json(['errors' => $errors], Response::HTTP_BAD_REQUEST);
         }
-    
+
         $em->persist($menuItem);
         $em->flush();
-    
-        $this->logger->info("MenuItem updated successfully");
+
         return new JsonResponse($serializer->serialize($menuItem, 'json', ['groups' => 'menu_item']), Response::HTTP_OK, [], true);
     }
     
@@ -151,6 +115,20 @@ class ApiMenuItemController extends AbstractController
 
         if (!$menuItem) {
             return new JsonResponse(['message' => 'Menu item not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Suppression des commentaires associés
+        $comments = $menuItem->getComments();
+        foreach ($comments as $comment) {
+            $em->remove($comment);
+        }
+
+        // Suppression de l'image associée
+        if ($menuItem->getImageUrl()) {
+            $imagePath = $this->getParameter('kernel.project_dir') . '/public/images' . $menuItem->getImageUrl();
+            if ($this->filesystem->exists($imagePath)) {
+                $this->filesystem->remove($imagePath);
+            }
         }
 
         $em->remove($menuItem);
