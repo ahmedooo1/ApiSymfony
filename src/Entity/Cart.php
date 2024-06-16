@@ -96,4 +96,5 @@ class Cart
         $this->isPaid = $isPaid;
         return $this;
     }
+  
 }

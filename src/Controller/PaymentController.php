@@ -17,11 +17,11 @@ class PaymentController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $amount = $data['amount']; // Amount should be in the smallest currency unit (e.g., cents for USD)
 
-        Stripe::setApiKey('your-stripe-secret-key');
+        Stripe::setApiKey('sk_test_51NAd2mCCNM9KNgubwaFR1aunw2HHFCDZqjv8QvdiTFc22hpmuWU4DT5W3AkpkDmzTohXzodGMo6rRUoXqL4KZW2y00zaEvWV0D');
 
         $paymentIntent = PaymentIntent::create([
             'amount' => $amount,
-            'currency' => 'usd',
+            'currency' => 'eur',
         ]);
 
         return new JsonResponse(['clientSecret' => $paymentIntent->client_secret]);

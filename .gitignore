@@ -9,6 +9,7 @@
 /vendor/
 /.env
 .env.test
+/public/*
 ###< symfony/framework-bundle ###
 
 ###> lexik/jwt-authentication-bundle ###

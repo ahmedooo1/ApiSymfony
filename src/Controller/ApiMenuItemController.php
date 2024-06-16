@@ -27,6 +27,19 @@ class ApiMenuItemController extends AbstractController
         $this->logger = $logger;
         $this->filesystem = $filesystem;
     }
+   
+    #[Route('/api/menu/{id}', name: 'api_menu_show', methods: ['GET'])]
+    public function show(int $id, MenuItemRepository $menuItemRepository, SerializerInterface $serializer): JsonResponse
+    {
+        $menuItem = $menuItemRepository->find($id);
+        if (!$menuItem) {
+            return new JsonResponse(['message' => 'Menu item not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $json = $serializer->serialize($menuItem, 'json', ['groups' => 'menu_item']);
+        return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
+    }
+
 
     #[Route('/api/menu', name: 'api_menu_get', methods: ['GET'])]
     public function index(MenuItemRepository $menuItemRepository, SerializerInterface $serializer): JsonResponse
