@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\CommentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 class Comment
@@ -11,20 +12,25 @@ class Comment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['comment', 'menu_item'])]
     private ?int $id = null;
 
     #[ORM\Column(type: "text")]
+    #[Groups(['comment', 'menu_item'])]
     private ?string $content = null;
 
     #[ORM\Column(type: "datetime")]
+    #[Groups(['comment', 'menu_item'])]
     private \DateTimeInterface $createdAt;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: MenuItem::class, inversedBy: 'comments')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['comment'])]
     private ?MenuItem $menuItem = null;
 
     // Getters and setters...

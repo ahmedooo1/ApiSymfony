@@ -13,27 +13,33 @@ class MenuItem
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['menu_item'])]
+    #[Groups(['menu_item', 'comment'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['menu_item'])]
+    #[Groups(['menu_item', 'comment'])]
     private ?string $name = null;
 
     #[ORM\Column(type: 'text')]
-    #[Groups(['menu_item'])]
+    #[Groups(['menu_item', 'comment'])]
     private ?string $description = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    #[Groups(['menu_item'])]
+    #[Groups(['menu_item', 'comment'])]
     private ?string $price = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(['menu_item'])]
+    #[Groups(['menu_item', 'comment'])]
     private ?string $image_url = null;
 
     #[ORM\OneToMany(targetEntity: Comment::class, mappedBy: "menuItem", cascade: ["remove"])]
+    #[Groups(['menu_item'])]
     private Collection $comments;
+
+    #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'menuItems')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['menu_item'])]
+    private ?Category $category = null;
 
     public function __construct()
     {
@@ -118,6 +124,17 @@ class MenuItem
             }
         }
 
+        return $this;
+    }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): static
+    {
+        $this->category = $category;
         return $this;
     }
 }

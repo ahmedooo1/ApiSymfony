@@ -22,15 +22,15 @@ class Cart
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
-    #[ORM\ManyToMany(targetEntity: MenuItem::class)]
-    private $menuItems;
+    #[ORM\OneToMany(targetEntity: CartItem::class, mappedBy: 'cart', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $cartItems;
 
     #[ORM\Column(type: "boolean")]
     private bool $isPaid;
 
     public function __construct()
     {
-        $this->menuItems = new ArrayCollection();
+        $this->cartItems = new ArrayCollection();
     }
 
     // Getters and setters...
@@ -62,27 +62,29 @@ class Cart
         return $this;
     }
 
-    public function getMenuItems(): Collection
+    public function getCartItems(): Collection
     {
-        return $this->menuItems;
+        return $this->cartItems;
     }
 
-    public function addMenuItem(MenuItem $menuItem): self
+    public function addCartItem(CartItem $cartItem): self
     {
-        if ($this->menuItems === null) {
-            $this->menuItems = new ArrayCollection();
-        }
-
-        if (!$this->menuItems->contains($menuItem)) {
-            $this->menuItems->add($menuItem);
+        if (!$this->cartItems->contains($cartItem)) {
+            $this->cartItems[] = $cartItem;
+            $cartItem->setCart($this);
         }
 
         return $this;
     }
 
-    public function removeMenuItem(MenuItem $menuItem): self
+    public function removeCartItem(CartItem $cartItem): self
     {
-        $this->menuItems->removeElement($menuItem);
+        if ($this->cartItems->removeElement($cartItem)) {
+            if ($cartItem->getCart() === $this) {
+                $cartItem->setCart(null);
+            }
+        }
+
         return $this;
     }
 
@@ -96,5 +98,4 @@ class Cart
         $this->isPaid = $isPaid;
         return $this;
     }
-  
 }

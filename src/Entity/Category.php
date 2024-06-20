@@ -18,7 +18,7 @@ class Category
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['cat','all_recette'])]
+    #[Groups(['cat','all_recette', 'menu_item'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -29,7 +29,7 @@ class Category
         maxMessage: 'Votre titre est trop long',
     )]
     #[Assert\NotBlank]
-    #[Groups(['cat','all_recette'])]
+    #[Groups(['cat','all_recette', 'menu_item'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -42,17 +42,18 @@ class Category
     #[Groups(['cat'])]
     private ?\DateTimeImmutable $created_at = null;
 
-    // #[Groups(['cat'])]
-    // private ?string $_links = null;
-
     #[ORM\OneToMany(targetEntity: Recette::class, mappedBy: 'category')]
     private Collection $recettes;
 
+    #[ORM\OneToMany(targetEntity: MenuItem::class, mappedBy: 'category')]
+    #[Groups(['cat'])]
+    private Collection $menuItems;
 
     public function __construct()
     {
         $this->setCreatedAt(new \DateTimeImmutable());
         $this->recettes = new ArrayCollection();
+        $this->menuItems = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -96,17 +97,6 @@ class Category
         return $this;
     }
 
-
-    // public function getLinks(): ?array
-    // {
-    //     return array(
-    //         'self' => '/api/category/' .$this->getId(),
-    //         'update' => '/api/category/' .$this->getId(),
-    //         'delete' => '/api/category/' .$this->getId(),
-    //     );
-    // }
-
-
     /**
      * @return Collection<int, Recette>
      */
@@ -131,6 +121,36 @@ class Category
             // set the owning side to null (unless already changed)
             if ($recette->getCategory() === $this) {
                 $recette->setCategory(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MenuItem>
+     */
+    public function getMenuItems(): Collection
+    {
+        return $this->menuItems;
+    }
+
+    public function addMenuItem(MenuItem $menuItem): static
+    {
+        if (!$this->menuItems->contains($menuItem)) {
+            $this->menuItems->add($menuItem);
+            $menuItem->setCategory($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMenuItem(MenuItem $menuItem): static
+    {
+        if ($this->menuItems->removeElement($menuItem)) {
+            // set the owning side to null (unless already changed)
+            if ($menuItem->getCategory() === $this) {
+                $menuItem->setCategory(null);
             }
         }
 

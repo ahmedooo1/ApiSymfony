@@ -26,7 +26,7 @@ class ContactController extends AbstractController
         return new Response('Contact Us page. Use POST /contact/submit to send a message.');
     }
 
-    #[Route('/contact/submit', name: 'contact_submit', methods: ['POST'])]
+    #[Route('/api/contact/submit', name: 'contact_submit', methods: ['POST'])]
     public function submit(Request $request): Response
     {
         $data = json_decode($request->getContent(), true);

@@ -12,20 +12,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[UniqueEntity('email',message: 'Votre compte existe déjà')]
+#[UniqueEntity('email', message: 'Votre compte existe déjà')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user_no_pass'])]
+    #[Groups(['user_no_pass', 'comment', 'menu_item'])]
     private ?int $id = null;
 
     #[ORM\Column(type: 'blob', nullable: true)]
-    #[Groups(['user_no_pass'])]
+    #[Groups(['user_no_pass', 'comment', 'menu_item'])]
     private $picture = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user_no_pass', 'comment', 'menu_item'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 180)]
@@ -33,7 +34,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Email(
         message: 'The email {{ value }} is not a valid email.',
     )]
-    #[Groups(['user_no_pass'])]
+    #[Groups(['user_no_pass', 'comment', 'menu_item'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -45,6 +46,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resetToken = null;
+
+    // ... autres méthodes ...
 
     public function getId(): ?int
     {

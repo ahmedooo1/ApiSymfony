@@ -92,4 +92,27 @@ class ApiAdminController extends AbstractController
 
         return $this->json(['message' => 'Invalid data'], JsonResponse::HTTP_BAD_REQUEST);
     }
+
+
+    #[Route('/api/admin/users/{id}/update', name: 'admin_update_user', methods: ['POST'])]
+    public function updateUserRole(int $id, Request $request, UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $userRepository->find($id);
+        if (!$user) {
+            return new JsonResponse(['message' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $roles = $data['roles'] ?? null;
+
+        if ($roles === null) {
+            return new JsonResponse(['message' => 'Roles not provided'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $user->setRoles($roles);
+        $em->persist($user);
+        $em->flush();
+
+        return new JsonResponse(['message' => 'User roles updated successfully']);
+    }
 }

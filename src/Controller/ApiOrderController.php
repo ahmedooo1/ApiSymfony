@@ -33,42 +33,12 @@ class ApiOrderController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $userId = $data['userId'];
 
-        $user = $this->userRepository->find($userId);
-        if (!$user) {
-            $this->logger->error('User not found', ['userId' => $userId]);
-            return $this->json(['message' => 'User not found'], JsonResponse::HTTP_NOT_FOUND);
+        if (!$userId) {
+            $this->logger->error('User ID is missing');
+            return $this->json(['message' => 'User ID is missing'], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $carts = $cartRepository->findBy(['user' => $user, 'isPaid' => false]);
-        if (!$carts) {
-            $this->logger->error('Cart not found', ['userId' => $userId]);
-            return $this->json(['message' => 'Cart not found'], JsonResponse::HTTP_NOT_FOUND);
-        }
-
-        foreach ($carts as $cart) {
-            $order = new Order();
-            $order->setCart($cart);
-            $order->setCreatedAt(new \DateTimeImmutable());
-            $order->setIsPaid(false);
-
-            $this->em->persist($order);
-            $cart->setIsPaid(true);
-            $this->em->persist($cart);
-        }
-
-        $this->em->flush();
-
-        // Envoyer un email à l'administrateur et ajouter une notification
-        $this->notifyAdminInternal($user, $carts);
-
-        return $this->json(['message' => 'Order placed successfully'], JsonResponse::HTTP_CREATED);
-    }
-
-    #[Route('/api/notify-admin', name: 'api_notify_admin', methods: ['POST'])]
-    public function notifyAdmin(Request $request, CartRepository $cartRepository): JsonResponse
-    {
-        $data = json_decode($request->getContent(), true);
-        $userId = $data['userId'];
+        $this->logger->info('Received order creation request', ['userId' => $userId]);
 
         $user = $this->userRepository->find($userId);
         if (!$user) {
@@ -82,56 +52,69 @@ class ApiOrderController extends AbstractController
             return $this->json(['message' => 'Cart not found'], JsonResponse::HTTP_NOT_FOUND);
         }
 
-        $orderDetails = [];
-        $totalPrice = 0;
+        try {
+            foreach ($carts as $cart) {
+                $order = new Order();
+                $order->setCart($cart);
+                $order->setCreatedAt(new \DateTimeImmutable());
+                $order->setIsPaid(false);
 
-        foreach ($carts as $cart) {
-            foreach ($cart->getMenuItems() as $menuItem) {
-                $orderDetails[] = $menuItem->getName() . ' - ' . $menuItem->getPrice() . ' €';
-                $totalPrice += $menuItem->getPrice();
+                $this->em->persist($order);
+                $cart->setIsPaid(true);
+                $this->em->persist($cart);
             }
+
+            $this->em->flush();
+
+            // Envoyer un email à l'administrateur et ajouter une notification
+            $this->notifyAdminInternal($user, $carts);
+
+            $this->logger->info('Order placed successfully', ['userId' => $userId]);
+
+            return $this->json(['message' => 'Order placed successfully'], JsonResponse::HTTP_CREATED);
+        } catch (\Exception $e) {
+            $this->logger->error('Error placing order', ['exception' => $e->getMessage()]);
+            return $this->json(['message' => 'Error placing order'], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $orderDetailsString = implode(', ', $orderDetails);
-
-        // Sauvegarder la notification de commande en base de données
-        $this->saveOrderNotification($user, $orderDetailsString);
-
-        return new JsonResponse(['message' => 'Admin notified successfully'], JsonResponse::HTTP_OK);
     }
 
     private function notifyAdminInternal($user, $carts)
     {
         $orderDetails = [];
         $totalPrice = 0;
-
+    
         foreach ($carts as $cart) {
-            foreach ($cart->getMenuItems() as $menuItem) {
-                $orderDetails[] = $menuItem->getName() . ' - $' . $menuItem->getPrice();
-                $totalPrice += $menuItem->getPrice();
+            foreach ($cart->getCartItems() as $cartItem) {
+                $menuItem = $cartItem->getMenuItem();
+                $quantity = $cartItem->getQuantity();
+                $itemTotalPrice = $menuItem->getPrice() * $quantity;
+                $orderDetails[] = $menuItem->getName() . ' (Quantité: ' . $quantity . ') - ' . $menuItem->getPrice() . ' € (Total: ' . $itemTotalPrice . ' €)';
+                $totalPrice += $itemTotalPrice;
             }
         }
-
+    
         $orderDetailsString = implode(', ', $orderDetails);
-
+    
         // Sauvegarder la notification de commande en base de données
-        $this->saveOrderNotification($user, $orderDetailsString);
+        $this->saveOrderNotification($user, $orderDetailsString, $totalPrice);
     }
-
-    private function saveOrderNotification($user, $orderDetails)
+    
+    private function saveOrderNotification($user, $orderDetails, $totalPrice)
     {
         $this->logger->info('Saving order notification', [
             'user' => $user->getEmail(),
-            'details' => $orderDetails
+            'details' => $orderDetails,
+            'totalPrice' => $totalPrice
         ]);
-
+    
         $notification = new OrderNotification();
         $notification->setUser($user);
-        $notification->setDetails($orderDetails);
-
+        $notification->setDetails($orderDetails . ' | Prix total: ' . $totalPrice . ' €');
+    
         $this->em->persist($notification);
         $this->em->flush();
     }
+    
 
     #[Route('/api/orders/{id}/pay', name: 'api_orders_pay', methods: ['POST'])]
     public function pay(int $id, OrderRepository $orderRepository, EntityManagerInterface $em): JsonResponse
