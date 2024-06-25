@@ -47,7 +47,7 @@ class ContactController extends AbstractController
         // Create the email
         $sendSmtpEmail = new \Brevo\Client\Model\SendSmtpEmail([
             'subject' => 'Contact Us Message',
-            'sender' => ['name' => 'THE-CHEF 76', 'email' => 'projetfinal78@gmail.com'], 
+            'sender' => ['name' => 'NF-EAT', 'email' => 'projetfinal78@gmail.com'], 
             'replyTo' => ['email' => $email], 
             'to' => [['email' => 'aahmadooo997@gmail.com']],
             'htmlContent' => '

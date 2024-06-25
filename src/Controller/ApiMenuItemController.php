@@ -50,14 +50,22 @@ class ApiMenuItemController extends AbstractController
             $categoryId = $request->query->get('categoryId');
 
             if ($categoryId) {
-                $items = $menuItemRepository->findBy(['category' => $categoryId]);
+                $items = $menuItemRepository->createQueryBuilder('m')
+                    ->select('m', 'COUNT(c.id) AS commentCount')
+                    ->leftJoin('m.comment', 'c')
+                    ->where('m.category = :categoryId')
+                    ->setParameter('categoryId', $categoryId)
+                    ->groupBy('m.id')
+                    ->getQuery()
+                    ->getResult();
             } else {
-                $items = $menuItemRepository->findAll();
+                $items = $menuItemRepository->getMenuItemsWithCommentCounts();
             }
 
             $json = $this->serializer->serialize($items, 'json', ['groups' => 'menu_item']);
             return new JsonResponse($json, JsonResponse::HTTP_OK, [], true);
         } catch (\Exception $e) {
+            $this->logger->error('Failed to fetch menu items', ['error' => $e->getMessage()]);
             return new JsonResponse(['message' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
