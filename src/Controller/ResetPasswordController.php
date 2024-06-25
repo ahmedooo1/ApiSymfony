@@ -55,28 +55,27 @@ class ResetPasswordController extends AbstractController
         $apiInstance = new TransactionalEmailsApi($client, $config);
 
         // Create the email
-        $sendSmtpEmail = new SendSmtpEmail([
-            'subject' => 'Password Reset Request',
-            'sender' => ['name' => 'THE-CHEF 76', 'email' => 'projetfinal78@gmail.com'],
-            'to' => [['email' => $user->getEmail()]],
-            'htmlContent' => '
-                <div style="font-family: Arial, sans-serif; color: #333;">
-                    <h2 style="color: #4CAF50;">Demande de réinitialisation de mot de passe</h2>
-                    <p>Bonjour ' . $user->getName() . ',</p>
-                    <p>Nous avons reçu une demande de réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
-                    <p style="text-align: center;">
-                        <a href="http://localhost:3000/reset-password/' . $resetToken . '" 
-                           style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                           Réinitialiser le mot de passe
-                        </a>
-                    </p>
-                    <p>Si vous n\'avez pas demandé de réinitialisation de mot de passe, veuillez ignorer cet e-mail ou contacter le support si vous avez des questions.</p>
-                    <p>Merci,<br>L\'équipe THE-CHEF 76</p>
-                    <p style="text-align: center;">
-                        <img src="https://example.com/path/to/logo.png" alt="CHEZ-MOI 76" style="width: 100px; height: auto;">
-                    </p>
-                </div>'
-        ]);
+        $sendSmtpEmail = new SendSmtpEmail();
+        $sendSmtpEmail->setSubject('Password Reset Request');
+        $sendSmtpEmail->setSender(['name' => 'NF-EAT', 'email' => 'projetfinal78@gmail.com']);
+        $sendSmtpEmail->setTo([['email' => $user->getEmail()]]);
+        $sendSmtpEmail->setHtmlContent('
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #4CAF50;">Demande de réinitialisation de mot de passe</h2>
+                <p>Bonjour ' . $user->getName() . ',</p>
+                <p>Nous avons reçu une demande de réinitialisation de votre mot de passe. Veuillez cliquer sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
+                <p style="text-align: center;">
+                    <a href="http://app.aa-world.store/reset-password/' . $resetToken . '" 
+                       style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                       Réinitialiser le mot de passe
+                    </a>
+                </p>
+                <p>Si vous n\'avez pas demandé de réinitialisation de mot de passe, veuillez ignorer cet e-mail ou contacter le support si vous avez des questions.</p>
+                <p>Merci,<br>L\'équipe NF-EAT</p>
+                <p style="text-align: center;">
+                    <img src="https://example.com/path/to/logo.png" alt="NF-EAT" style="width: 100px; height: auto;">
+                </p>
+            </div>');
 
         try {
             $apiInstance->sendTransacEmail($sendSmtpEmail);
